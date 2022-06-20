@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
+using ReverseProxyApp;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -10,14 +11,23 @@ namespace ReverseProxyApplication
 {
     public class ReverseProxyMiddleware
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        //Static instance that represent a HttpClient, class contained in System.Net.Http
+        //and will send and precessed the requests
+        private static readonly HttpClient _httpClient = Client.GetInstance();
+
+        //Object representing the middleware, in our case to pass to the next middleware
         private readonly RequestDelegate _nextMiddleware;
 
+        private LoadBalancer loadBalancer;
+
+        //Constructor of the class, with inversion of control initialize the "_nextMiddelware"
         public ReverseProxyMiddleware(RequestDelegate nextMiddleware)
         {
             _nextMiddleware = nextMiddleware;
+            loadBalancer = new LoadBalancer();
         }
 
+        //Main method of the reverse proxy where everithing happend
         public async Task Invoke(HttpContext context)
         {
             var targetUri = BuildTargetUri(context.Request);
@@ -131,32 +141,28 @@ namespace ReverseProxyApplication
         private Uri BuildTargetUri(HttpRequest request)
         {
             Uri targetUri = null;
-            PathString remainingPath;
-
-            /* if (request.Path.StartsWithSegments("/test", out remainingPath))
-             {
-                 //targetUri = new Uri("https://docs.google.com/forms" + remainingPath);
-                 targetUri = new Uri("http://localhost:5252"+remainingPath);
-             }
-             else
-             {
-                 if (request.Path.StartsWithSegments("/google", out remainingPath))
-                 {
-                     targetUri = new Uri("https://www.google.com" + remainingPath);
-                 }
-
-                 if (request.Path.StartsWithSegments("/googlestatic", out remainingPath))
-                 {
-                     targetUri = new Uri(" https://www.gstatic.com" + remainingPath);
-                 }
-             }*/
-
 
             if (request.Path.HasValue)
-            {              
-                targetUri = new Uri("http://localhost:5252" + request.Path.Value);
-              
-            }         
+            {
+                /*
+                 * Basic implementation of a random load-balancer between 2 servers
+                 *   Random random = new Random();
+                 *   int test = random.Next(0,2);
+                 *   if (test==0)
+                 *   {
+                 *      targetUri = new Uri("http://localhost:5118" + request.Path.Value);
+                 *   }
+                 *   else
+                 *   {
+                 *       targetUri = new Uri("https://localhost:7069" + request.Path.Value);
+                 *   }
+                 * 
+                 */
+
+
+                //Round-robin strategy for the load-balancer
+                targetUri = loadBalancer.getUri(request.Path.Value);
+            }
             return targetUri;
         }
     }

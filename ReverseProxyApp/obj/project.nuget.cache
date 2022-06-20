@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "ihH9jndvuusr64KwNM4VqAixehywqh6p4TjOeFb9rM9an0l0bAzJAlmRc93UaVd4MO1C0X0D+4Z5bpA1eW/I2w==",
+  "dgSpecHash": "yzC3Fqoquj9FMAjFuPJG4SHmH0gOBUfoB+MIok1GrO9R/egBFjEfrXLP6slctfXu7bj5+Pfc5OxXadEv/rxyTA==",
   "success": true,
-  "projectFilePath": "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\leand\\source\\repos\\Erdneael\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\leand\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\leand\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
+    "C:\\Users\\leand\\.nuget\\packages\\system.collections\\4.3.0\\system.collections.4.3.0.nupkg.sha512",
+    "C:\\Users\\leand\\.nuget\\packages\\system.runtime\\4.3.0\\system.runtime.4.3.0.nupkg.sha512"
+  ],
   "logs": []
 }

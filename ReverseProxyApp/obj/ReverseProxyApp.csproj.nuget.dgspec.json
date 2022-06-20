@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj": {}
+    "C:\\Users\\leand\\source\\repos\\Erdneael\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj": {}
   },
   "projects": {
-    "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj": {
+    "C:\\Users\\leand\\source\\repos\\Erdneael\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj",
+        "projectUniqueName": "C:\\Users\\leand\\source\\repos\\Erdneael\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj",
         "projectName": "ReverseProxyApp",
-        "projectPath": "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj",
+        "projectPath": "C:\\Users\\leand\\source\\repos\\Erdneael\\reverse-proxy\\ReverseProxyApp\\ReverseProxyApp.csproj",
         "packagesPath": "C:\\Users\\leand\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxyApp\\obj\\",
+        "outputPath": "C:\\Users\\leand\\source\\repos\\Erdneael\\reverse-proxy\\ReverseProxyApp\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\leand\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -39,6 +39,12 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
+          "dependencies": {
+            "System.Collections": {
+              "target": "Package",
+              "version": "[4.3.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -57,7 +63,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.200\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
         }
       }
     }
