@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "9Tvej+nFAvabGjiUA7v7WFVP63XbMLxA3FKDeJo+1yPJJ4bUY9TOiCaF7doPN1Q8nOP3Y9cxFwtuM58vRy9vHA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\leand\\source\\repos\\reverse-proxy\\ReverseProxy\\ReverseProxy.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\leand\\.nuget\\packages\\microsoft.visualstudio.azure.containers.tools.targets\\1.14.0\\microsoft.visualstudio.azure.containers.tools.targets.1.14.0.nupkg.sha512"
+  ],
+  "logs": []
+}
