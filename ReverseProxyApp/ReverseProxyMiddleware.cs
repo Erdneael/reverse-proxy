@@ -22,8 +22,10 @@ namespace ReverseProxyApplication
         //Instance of the loadBalancer 
         private LoadBalancer loadBalancer;
 
+        //In Memory cache object
         private readonly IMemoryCache _cache;
 
+        //Simplified Semaphore for thread safe cache
         private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         //Constructor of the class, with dependencies injection initializing the "_nextMiddelware" and "_cache"
@@ -43,20 +45,23 @@ namespace ReverseProxyApplication
             //If Uri not null
             if (targetUri != null)
             {
-
+                //With the Uri create a HttpRequestMessage for the server
                 var targetRequestMessage = CreateTargetMessage(context, targetUri);
+                //Send the request and use the response
                 using (var responseMessage = await _httpClient.SendAsync(targetRequestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
                 {
                     context.Response.StatusCode = (int)responseMessage.StatusCode;
+                    //Copy the http headers and response
                     CopyFromTargetResponseHeaders(context, responseMessage);
+                    //Send the response to the client
                     await ProcessResponseContent(context, responseMessage);
                 }
                 
                 if (_cache.TryGetValue(targetRequestMessage.RequestUri, out string respo))
                 {
-                    /*  context.Response.StatusCode = (int)otherResponse.StatusCode;
-                     CopyFromTargetResponseHeaders(context, otherResponse);
-                    await otherResponse.Content.CopyToAsync(context.Response.Body);*/
+                    /*  
+                     if Something is in cache do something with it  ....
+                     */
 
                 }
                 else
@@ -207,6 +212,7 @@ namespace ReverseProxyApplication
                  * 
                  */
                 //Round-robin strategy load balancer
+                //An improvement that could be done is a weighted load balancing strategy instead of a round robin 
                 targetUri = loadBalancer.getUri(request.Path.Value);
             }
             return targetUri;
