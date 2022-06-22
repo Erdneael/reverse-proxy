@@ -14,7 +14,7 @@ namespace ReverseProxyApplication
     {
         //Static instance that represent a HttpClient, class contained in System.Net.Http
         //and will send and precessed the requests
-        private static readonly HttpClient _httpClient ;
+        private static readonly HttpClient _httpClient = Client.GetInstance();
 
         //Object representing the middleware, in our case to pass to the next middleware
         private readonly RequestDelegate _nextMiddleware;
@@ -82,6 +82,7 @@ namespace ReverseProxyApplication
                                       .SetAbsoluteExpiration(TimeSpan.FromSeconds(3600))
                                       .SetPriority(CacheItemPriority.Normal);
 
+                            //Set some information in the cache with the key corresponding to the request Uri
                             _cache.Set(targetRequestMessage.RequestUri, "Some information", cacheEntryOptions);
                         }
 
@@ -162,8 +163,10 @@ namespace ReverseProxyApplication
             }
         }
 
+        //Copy the headers of the response to the header of the actual context
         private void CopyFromTargetResponseHeaders(HttpContext context, HttpResponseMessage responseMessage)
         {
+            
             foreach (var header in responseMessage.Headers)
             {
                 context.Response.Headers[header.Key] = header.Value.ToArray();
