@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Caching.Memory;
 using ReverseProxyApp;
 using System;
 using System.Linq;
@@ -13,39 +14,87 @@ namespace ReverseProxyApplication
     {
         //Static instance that represent a HttpClient, class contained in System.Net.Http
         //and will send and precessed the requests
-        private static readonly HttpClient _httpClient = Client.GetInstance();
+        private static readonly HttpClient _httpClient ;
 
         //Object representing the middleware, in our case to pass to the next middleware
         private readonly RequestDelegate _nextMiddleware;
 
+        //Instance of the loadBalancer 
         private LoadBalancer loadBalancer;
 
-        //Constructor of the class, with inversion of control initialize the "_nextMiddelware"
-        public ReverseProxyMiddleware(RequestDelegate nextMiddleware)
+        private readonly IMemoryCache _cache;
+
+        private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+
+        //Constructor of the class, with dependencies injection initializing the "_nextMiddelware" and "_cache"
+        public ReverseProxyMiddleware(RequestDelegate nextMiddleware, IMemoryCache memoryCache)
         {
             _nextMiddleware = nextMiddleware;
             loadBalancer = new LoadBalancer();
+            _cache = memoryCache;
         }
 
-        //Main method of the reverse proxy where everithing happend
+        //Main method of the reverse proxy where everithing happend, is called at every client request
         public async Task Invoke(HttpContext context)
         {
-            var targetUri = BuildTargetUri(context.Request);
+            //Firt build the target Uri
+            Uri targetUri = BuildTargetUri(context.Request);
 
+            //If Uri not null
             if (targetUri != null)
             {
-                var targetRequestMessage = CreateTargetMessage(context, targetUri);
 
+                var targetRequestMessage = CreateTargetMessage(context, targetUri);
                 using (var responseMessage = await _httpClient.SendAsync(targetRequestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
                 {
                     context.Response.StatusCode = (int)responseMessage.StatusCode;
                     CopyFromTargetResponseHeaders(context, responseMessage);
                     await ProcessResponseContent(context, responseMessage);
                 }
-                return;
+                
+                if (_cache.TryGetValue(targetRequestMessage.RequestUri, out string respo))
+                {
+                    /*  context.Response.StatusCode = (int)otherResponse.StatusCode;
+                     CopyFromTargetResponseHeaders(context, otherResponse);
+                    await otherResponse.Content.CopyToAsync(context.Response.Body);*/
+
+                }
+                else
+                {
+                    try
+                    {
+                        await semaphore.WaitAsync();
+                        if (_cache.TryGetValue(targetRequestMessage.RequestUri, out string resp))
+                        {
+                            /*
+                             *Check if the cache is available if yes then use it 
+                             */
+                        }
+                        else
+                        {
+                            var cacheEntryOptions = new MemoryCacheEntryOptions()
+                                      .SetSlidingExpiration(TimeSpan.FromSeconds(60))
+                                      .SetAbsoluteExpiration(TimeSpan.FromSeconds(3600))
+                                      .SetPriority(CacheItemPriority.Normal);
+
+                            _cache.Set(targetRequestMessage.RequestUri, "Some information", cacheEntryOptions);
+                        }
+
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+
+
+
+                    return;
+                }
+
+                await _nextMiddleware(context);
             }
-            await _nextMiddleware(context);
         }
+
 
         private async Task ProcessResponseContent(HttpContext context, HttpResponseMessage responseMessage)
         {
@@ -55,10 +104,8 @@ namespace ReverseProxyApplication
                 IsContentOfType(responseMessage, "text/javascript"))
             {
                 var stringContent = Encoding.UTF8.GetString(content);
-                var newContent = stringContent.Replace("https://www.google.com", "/google")
-                    .Replace("https://www.gstatic.com", "/googlestatic")
-                    .Replace("https://docs.google.com/forms", "/googleforms"); ;
-                await context.Response.WriteAsync(newContent, Encoding.UTF8);
+
+                await context.Response.WriteAsync(stringContent, Encoding.UTF8);
             }
             else
             {
@@ -83,9 +130,6 @@ namespace ReverseProxyApplication
             var requestMessage = new HttpRequestMessage();
 
             CopyFromOriginalRequestContentAndHeaders(context, requestMessage);
-
-            targetUri = new Uri(QueryHelpers.AddQueryString(targetUri.OriginalString,
-                       new Dictionary<string, string>() { { "entry.1884265043", "John Doe" } }));
 
             requestMessage.RequestUri = targetUri;
             requestMessage.Headers.Host = targetUri.Host;
@@ -126,6 +170,8 @@ namespace ReverseProxyApplication
             }
             context.Response.Headers.Remove("transfer-encoding");
         }
+
+        //Method returning the HttpMethod of the request
         private static HttpMethod GetMethod(string method)
         {
             if (HttpMethods.IsDelete(method)) return HttpMethod.Delete;
@@ -138,6 +184,8 @@ namespace ReverseProxyApplication
             return new HttpMethod(method);
         }
 
+
+        //Method returning the target Uri and using a LoadBalancer  
         private Uri BuildTargetUri(HttpRequest request)
         {
             Uri targetUri = null;
@@ -158,9 +206,7 @@ namespace ReverseProxyApplication
                  *   }
                  * 
                  */
-
-
-                //Round-robin strategy for the load-balancer
+                //Round-robin strategy load balancer
                 targetUri = loadBalancer.getUri(request.Path.Value);
             }
             return targetUri;

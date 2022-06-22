@@ -16,7 +16,6 @@ app.UseStaticFiles();
 
 app.UseMiddleware<ReverseProxyMiddleware>();
 
-
 app.UseRouting();
 
 app.UseAuthorization();
