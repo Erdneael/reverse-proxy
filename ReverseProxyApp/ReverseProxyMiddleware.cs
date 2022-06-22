@@ -13,7 +13,7 @@ namespace ReverseProxyApplication
     public class ReverseProxyMiddleware
     {
         //Static instance that represent a HttpClient, class contained in System.Net.Http
-        //and will send and precessed the requests
+        //and will send and processed the requests
         private static readonly HttpClient _httpClient = Client.GetInstance();
 
         //Object representing the middleware, in our case to pass to the next middleware
@@ -57,6 +57,8 @@ namespace ReverseProxyApplication
                     await ProcessResponseContent(context, responseMessage);
                 }
                 
+
+                //Way of improvement would be to have a shared cahce using a database
                 if (_cache.TryGetValue(targetRequestMessage.RequestUri, out string respo))
                 {
                     /*  
