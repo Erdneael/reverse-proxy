@@ -20,6 +20,7 @@ namespace ReverseProxyApp
         //Constructor of the LoadBalancer
         public LoadBalancer()
         {
+            //A better way if implementation would be to use maybe a configuration file to initialize the List
             downstreams = new List<string>();
             downstreams.Add("http://localhost:5118");
             downstreams.Add("https://localhost:7069");

@@ -14,6 +14,7 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStaticFiles();
 
+//Use the Proxy as Middleware to catch all request
 app.UseMiddleware<ReverseProxyMiddleware>();
 
 app.UseRouting();

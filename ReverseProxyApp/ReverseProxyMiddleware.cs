@@ -54,9 +54,9 @@ namespace ReverseProxyApplication
                     //Copy the http headers and response
                     CopyFromTargetResponseHeaders(context, responseMessage);
                     //Send the response to the client
-                    await ProcessResponseContent(context, responseMessage);
+                    await SendResponceToClient(context, responseMessage);
                 }
-                
+
 
                 //Way of improvement would be to have a shared cahce using a database
                 if (_cache.TryGetValue(targetRequestMessage.RequestUri, out string respo))
@@ -70,6 +70,7 @@ namespace ReverseProxyApplication
                 {
                     try
                     {
+                        //Wait for the Semaphore to be thread safe
                         await semaphore.WaitAsync();
                         if (_cache.TryGetValue(targetRequestMessage.RequestUri, out string resp))
                         {
@@ -93,9 +94,6 @@ namespace ReverseProxyApplication
                     {
                         semaphore.Release();
                     }
-
-
-
                     return;
                 }
 
@@ -104,15 +102,17 @@ namespace ReverseProxyApplication
         }
 
 
-        private async Task ProcessResponseContent(HttpContext context, HttpResponseMessage responseMessage)
+        private async Task SendResponceToClient(HttpContext context, HttpResponseMessage responseMessage)
         {
             var content = await responseMessage.Content.ReadAsByteArrayAsync();
 
+            //If HTML or JS encode to prevent security failure
             if (IsContentOfType(responseMessage, "text/html") ||
                 IsContentOfType(responseMessage, "text/javascript"))
             {
                 var stringContent = Encoding.UTF8.GetString(content);
 
+                //Write the response to the client 
                 await context.Response.WriteAsync(stringContent, Encoding.UTF8);
             }
             else
@@ -141,11 +141,12 @@ namespace ReverseProxyApplication
 
             requestMessage.RequestUri = targetUri;
             requestMessage.Headers.Host = targetUri.Host;
-            requestMessage.Method = GetMethod(context.Request.Method);
+            requestMessage.Method = GetHTTPMethodFromString(context.Request.Method);
 
             return requestMessage;
         }
 
+        //Copy the client request
         private void CopyFromOriginalRequestContentAndHeaders(HttpContext context, HttpRequestMessage requestMessage)
         {
             var requestMethod = context.Request.Method;
@@ -155,20 +156,22 @@ namespace ReverseProxyApplication
               !HttpMethods.IsDelete(requestMethod) &&
               !HttpMethods.IsTrace(requestMethod))
             {
+                //If a HttpMethod create a StreamContent and initialize the requeste Message
                 var streamContent = new StreamContent(context.Request.Body);
                 requestMessage.Content = streamContent;
             }
 
+            //Copy the header of the client request
             foreach (var header in context.Request.Headers)
             {
                 requestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
             }
         }
 
-        //Copy the headers of the response to the header of the actual context
+        //Copy the headers of the response to the header of the actual HttpContext
         private void CopyFromTargetResponseHeaders(HttpContext context, HttpResponseMessage responseMessage)
         {
-            
+
             foreach (var header in responseMessage.Headers)
             {
                 context.Response.Headers[header.Key] = header.Value.ToArray();
@@ -178,11 +181,12 @@ namespace ReverseProxyApplication
             {
                 context.Response.Headers[header.Key] = header.Value.ToArray();
             }
+            //Remove the encoding
             context.Response.Headers.Remove("transfer-encoding");
         }
 
-        //Method returning the HttpMethod of the request
-        private static HttpMethod GetMethod(string method)
+        //Method returning the HttpMethod of the string
+        private static HttpMethod GetHTTPMethodFromString(string method)
         {
             if (HttpMethods.IsDelete(method)) return HttpMethod.Delete;
             if (HttpMethods.IsGet(method)) return HttpMethod.Get;
